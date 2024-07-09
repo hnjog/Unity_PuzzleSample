@@ -5,8 +5,11 @@ using Assets.Scripts.ETC;
 
 public class BaseBlock : MonoBehaviour
 {
-    private JewelType blockJewelType = JewelType.None;
-    private const byte blockPoint = 100;
+    [SerializeField]
+    protected JewelType blockJewelType = JewelType.None;
+
+    [SerializeField]
+    protected const byte blockPoint = 100;
 
     public JewelType jewelType
     {
