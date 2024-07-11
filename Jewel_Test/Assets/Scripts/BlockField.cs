@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,9 +34,34 @@ public class BlockField : MonoBehaviour
     }
 
 
-    // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                GameObject clickedObject = hit.collider.gameObject;
+                Debug.Log("Clicked object: " + clickedObject.name);
+
+                GameObject parentObject = clickedObject.transform.parent.gameObject;
+
+                // board 배열에서 clickedObject를 찾기
+                for (int i = 0; i < boardSize; i++)
+                {
+                    for (int j = 0; j < boardSize; j++)
+                    {
+                        if (board[i, j] != null && board[i, j].Equals(parentObject))
+                        {
+                            Debug.Log($"Clicked object is at ({i}, {j}) in the board");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
+
 }
