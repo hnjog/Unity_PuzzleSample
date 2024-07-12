@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,6 +11,9 @@ public class BlockField : MonoBehaviour
     const int zeroStartX = -5;
     const int zeroStartY = 5;
     private GameObject[,] board = new GameObject[boardSize, boardSize];
+
+    private Tuple<int, int> selectedPosition1 = null;
+    private Tuple<int, int> selectedPosition2 = null;
 
     void Start()
     {
@@ -33,7 +37,6 @@ public class BlockField : MonoBehaviour
         }
     }
 
-
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -48,20 +51,88 @@ public class BlockField : MonoBehaviour
 
                 GameObject parentObject = clickedObject.transform.parent.gameObject;
 
-                // board 배열에서 clickedObject를 찾기
-                for (int i = 0; i < boardSize; i++)
+                // board 배열에서 부모 게임 오브젝트를 찾기
+                Tuple<int, int> position = FindPositionInBoard(parentObject);
+                if (position != null)
                 {
-                    for (int j = 0; j < boardSize; j++)
+                    Debug.Log($"Clicked object is at ({position.Item1}, {position.Item2}) in the board");
+
+                    // 첫 번째 선택인 경우
+                    if (selectedPosition1 == null)
                     {
-                        if (board[i, j] != null && board[i, j].Equals(parentObject))
-                        {
-                            Debug.Log($"Clicked object is at ({i}, {j}) in the board");
-                            break;
-                        }
+                        selectedPosition1 = position;
+                        Debug.Log($"First selection at ({selectedPosition1.Item1}, {selectedPosition1.Item2})");
+                    }
+                    // 두 번째 선택인 경우
+                    else if (selectedPosition2 == null)
+                    {
+                        selectedPosition2 = position;
+                        Debug.Log($"Second selection at ({selectedPosition2.Item1}, {selectedPosition2.Item2})");
+
+                        // 두 선택 간 비교
+                        CompareSelectedPositions();
                     }
                 }
             }
         }
+    }
+
+    void CompareSelectedPositions()
+    {
+        if (selectedPosition1 != null && selectedPosition2 != null)
+        {
+            (int x1, int y1) = selectedPosition1.ToValueTuple();
+            (int x2, int y2) = selectedPosition2.ToValueTuple();
+
+            //Debug.Log($"Comparing ({selectedPosition1.Item1}, {selectedPosition1.Item2}) and ({selectedPosition2.Item1}, {selectedPosition2.Item2})");
+
+            int disValue = Math.Abs(x1 - x2) + Math.Abs(y1 - y2);
+
+            if(disValue == 1)
+            {
+                SwapPositions(selectedPosition1, selectedPosition2);
+            }
+        }
+
+        // 선택 초기화
+        selectedPosition1 = null;
+        selectedPosition2 = null;
+    }
+
+    void SwapPositions(Tuple<int, int> pos1, Tuple<int, int> pos2)
+    {
+        // 첫 번째 오브젝트의 board 위치와 transform 위치 저장
+        int x1 = pos1.Item1;
+        int y1 = pos1.Item2;
+        Vector3 pos1Transform = board[x1, y1].transform.position;
+        GameObject obj1 = board[x1, y1];
+
+        // 두 번째 오브젝트의 board 위치와 transform 위치 저장
+        int x2 = pos2.Item1;
+        int y2 = pos2.Item2;
+        Vector3 pos2Transform = board[x2, y2].transform.position;
+        GameObject obj2 = board[x2, y2];
+
+        // 두 오브젝트의 board 위치와 transform 위치 swap
+        board[x1, y1].transform.position = pos2Transform;
+        board[x2, y2].transform.position = pos1Transform;
+        board[x1, y1] = obj2;
+        board[x2, y2] = obj1;
+    }
+
+    Tuple<int, int> FindPositionInBoard(GameObject parentObject)
+    {
+        for (int i = 0; i < boardSize; i++)
+        {
+            for (int j = 0; j < boardSize; j++)
+            {
+                if (board[i, j] != null && board[i, j].Equals(parentObject))
+                {
+                    return new Tuple<int, int>(i, j);
+                }
+            }
+        }
+        return null;
     }
 
 }
