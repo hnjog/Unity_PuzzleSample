@@ -118,6 +118,8 @@ public class BlockField : MonoBehaviour
         board[x2, y2].transform.position = pos1Transform;
         board[x1, y1] = obj2;
         board[x2, y2] = obj1;
+
+        CheckMatches();
     }
 
     Tuple<int, int> FindPositionInBoard(GameObject parentObject)
@@ -135,4 +137,49 @@ public class BlockField : MonoBehaviour
         return null;
     }
 
+    void CheckMatches()
+    {
+        for (int i = 0; i < boardSize; i++)
+        {
+            for (int j = 0; j < boardSize; j++)
+            {
+                // 가로 3개 체크
+                if (j + 2 < boardSize &&
+                    board[i, j].GetComponent<BaseBlock>().jewelType == board[i, j + 1].GetComponent<BaseBlock>().jewelType &&
+                    board[i, j + 1].GetComponent<BaseBlock>().jewelType == board[i, j + 2].GetComponent<BaseBlock>().jewelType)
+                {
+                    RemoveBlocks(i,j);
+                    RemoveBlocks(i,j + 1);
+                    RemoveBlocks(i,j + 2);
+                }
+
+                // 세로 3개 체크
+                if (i + 2 < boardSize &&
+                         board[i, j].GetComponent<BaseBlock>().jewelType == board[i + 1, j].GetComponent<BaseBlock>().jewelType &&
+                         board[i + 1, j].GetComponent<BaseBlock>().jewelType == board[i + 2, j].GetComponent<BaseBlock>().jewelType)
+                {
+                    RemoveBlocks(i, j);
+                    RemoveBlocks(i + 1, j);
+                    RemoveBlocks(i + 2, j);
+                }
+            }
+        }
+    }
+
+    void RemoveBlocks(int x, int y)
+    {
+        board[x, y].SetActive(false);
+        //board[x, y] = null;
+
+        // block이 없어지는 것은 하나의 타이밍
+        // 이후 그 타이밍이 끝난 후,
+        // board에서 빈 녀석들을 찾아 그 위쪽 녀석들을 떨어트린다
+
+        //for (int i = y; i > 0; i--)
+        //{
+        //    board[x, i] = board[x, i - 1];
+        //}
+
+        
+    }
 }

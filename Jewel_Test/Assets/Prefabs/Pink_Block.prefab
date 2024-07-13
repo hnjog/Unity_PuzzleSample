@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f744cd84ad7d14986fb77ff2b7d9e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockJewelType: 5
+  blockJewelType: 6
 --- !u!1 &4149410939200717083
 GameObject:
   m_ObjectHideFlags: 0
