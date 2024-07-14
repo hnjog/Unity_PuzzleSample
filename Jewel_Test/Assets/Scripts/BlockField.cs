@@ -8,12 +8,26 @@ public class BlockField : MonoBehaviour
     private BlockManager blockManager;
     const int boardSize = 8;
     const float blockInterval = 1.5f;
-    const int zeroStartX = -5;
-    const int zeroStartY = 5;
+    const float zeroStartX = -5.0f;
+    const float zeroStartY = -5.5f;
     private GameObject[,] board = new GameObject[boardSize, boardSize];
 
     private Tuple<int, int> selectedPosition1 = null;
     private Tuple<int, int> selectedPosition2 = null;
+
+    public class BlockRemovedEventArgs : EventArgs
+    {
+        public int X { get; }
+        public int Y { get; }
+
+        public BlockRemovedEventArgs(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
+    public event EventHandler<BlockRemovedEventArgs> BlockRemoved;
 
     void Start()
     {
@@ -29,7 +43,7 @@ public class BlockField : MonoBehaviour
             for(int j = 0; j < boardSize; j++)
             {
                 float x = zeroStartX + blockInterval * i;
-                float y = zeroStartY - blockInterval * j;
+                float y = zeroStartY + blockInterval * j;
 
                 board[i,j].gameObject.SetActive(true);
                 board[i, j].gameObject.transform.position = new Vector3(x, y, 0);
@@ -169,17 +183,11 @@ public class BlockField : MonoBehaviour
     void RemoveBlocks(int x, int y)
     {
         board[x, y].SetActive(false);
-        //board[x, y] = null;
+        OnBlockRemoved(new BlockRemovedEventArgs(x, y));
+    }
 
-        // block이 없어지는 것은 하나의 타이밍
-        // 이후 그 타이밍이 끝난 후,
-        // board에서 빈 녀석들을 찾아 그 위쪽 녀석들을 떨어트린다
-
-        //for (int i = y; i > 0; i--)
-        //{
-        //    board[x, i] = board[x, i - 1];
-        //}
-
-        
+    protected virtual void OnBlockRemoved(BlockRemovedEventArgs e)
+    {
+        BlockRemoved?.Invoke(this, e);
     }
 }
