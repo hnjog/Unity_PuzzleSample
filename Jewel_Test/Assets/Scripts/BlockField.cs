@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.ETC;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,24 +16,15 @@ public class BlockField : MonoBehaviour
     private Tuple<int, int> selectedPosition1 = null;
     private Tuple<int, int> selectedPosition2 = null;
 
-    public class BlockRemovedEventArgs : EventArgs
-    {
-        public int X { get; }
-        public int Y { get; }
-
-        public BlockRemovedEventArgs(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-    }
-
-    public event EventHandler<BlockRemovedEventArgs> BlockRemoved;
+    private List<Tuple<int, int>> removedBlocks = new List<Tuple<int, int>>();
+    private bool isChange = false;
 
     void Start()
     {
+        // 가능성
         blockManager = FindObjectOfType<BlockManager>();
         FillBoard();
+        CheckMatches();
     }
 
     private void FillBoard()
@@ -153,6 +145,8 @@ public class BlockField : MonoBehaviour
 
     void CheckMatches()
     {
+        removedBlocks.Clear(); // 제거된 블록 정보 초기화
+
         for (int i = 0; i < boardSize; i++)
         {
             for (int j = 0; j < boardSize; j++)
@@ -162,32 +156,87 @@ public class BlockField : MonoBehaviour
                     board[i, j].GetComponent<BaseBlock>().jewelType == board[i, j + 1].GetComponent<BaseBlock>().jewelType &&
                     board[i, j + 1].GetComponent<BaseBlock>().jewelType == board[i, j + 2].GetComponent<BaseBlock>().jewelType)
                 {
-                    RemoveBlocks(i,j);
-                    RemoveBlocks(i,j + 1);
-                    RemoveBlocks(i,j + 2);
+                    removedBlocks.Add(new Tuple<int, int>(i, j));
+                    removedBlocks.Add(new Tuple<int, int>(i, j + 1));
+                    removedBlocks.Add(new Tuple<int, int>(i, j + 2));
                 }
 
                 // 세로 3개 체크
                 if (i + 2 < boardSize &&
-                         board[i, j].GetComponent<BaseBlock>().jewelType == board[i + 1, j].GetComponent<BaseBlock>().jewelType &&
-                         board[i + 1, j].GetComponent<BaseBlock>().jewelType == board[i + 2, j].GetComponent<BaseBlock>().jewelType)
+                     board[i, j].GetComponent<BaseBlock>().jewelType == board[i + 1, j].GetComponent<BaseBlock>().jewelType &&
+                     board[i + 1, j].GetComponent<BaseBlock>().jewelType == board[i + 2, j].GetComponent<BaseBlock>().jewelType)
                 {
-                    RemoveBlocks(i, j);
-                    RemoveBlocks(i + 1, j);
-                    RemoveBlocks(i + 2, j);
+                    removedBlocks.Add(new Tuple<int, int>(i, j));
+                    removedBlocks.Add(new Tuple<int, int>(i + 1, j));
+                    removedBlocks.Add(new Tuple<int, int>(i + 2, j));
                 }
             }
+        }
+
+        // 제거된 블록 처리
+        foreach (var pos in removedBlocks)
+        {
+            RemoveBlocks(pos.Item1, pos.Item2);
+        }
+
+        if(isChange)
+        {
+            ShiftBlocksDown();
+            FillEmptySpaces();
+            isChange = false;
+            CheckMatches();
         }
     }
 
     void RemoveBlocks(int x, int y)
     {
         board[x, y].SetActive(false);
-        OnBlockRemoved(new BlockRemovedEventArgs(x, y));
+        isChange = true;
     }
 
-    protected virtual void OnBlockRemoved(BlockRemovedEventArgs e)
+    void ShiftBlocksDown()
     {
-        BlockRemoved?.Invoke(this, e);
+        for (int x = 0; x < boardSize; x++)
+        {
+            for (int y = 0; y < boardSize; y++)
+            {
+                if (!board[x, y].activeInHierarchy)
+                {
+                    for (int i = y + 1; i < boardSize; i++)
+                    {
+                        if (board[x, i].activeInHierarchy)
+                        {
+                            GameObject temp = board[x, y];
+                            board[x, y] = board[x, i];
+                            board[x, i] = temp;
+
+                            board[x, y].transform.position = board[x, i].transform.position;
+
+                            board[x, y].SetActive(true);
+                            board[x, i].SetActive(false);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void FillEmptySpaces()
+    {
+        for (int x = 0; x < boardSize; x++)
+        {
+            for (int y = 0; y < boardSize; y++)
+            {
+                if (!board[x, y].activeInHierarchy)
+                {
+                    JewelType randomType = (JewelType)UnityEngine.Random.Range((int)JewelType.Red, (int)JewelType.JewelTypeCount);
+                    GameObject newBlock = blockManager.GetRandomBlock(randomType);
+                    newBlock.transform.position = board[x, y].transform.position;
+                    board[x, y] = newBlock;
+                    board[x, y].SetActive(true);
+                }
+            }
+        }
     }
 }
